@@ -7,6 +7,38 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300..900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <!-- Firebase SDK -->
+    <script type="module">
+      import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+      import { getFirestore } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+      
+      // Firebase configuration
+      // To get your full config, go to Firebase Console > Project Settings > General > Your apps > Web app
+      // Copy the config object and replace the values below
+      const firebaseConfig = {
+        projectId: 'personalwebsite-angela',
+        // Uncomment and add your config values:
+        // apiKey: 'YOUR_API_KEY',
+        // authDomain: 'YOUR_AUTH_DOMAIN',
+        // storageBucket: 'YOUR_STORAGE_BUCKET',
+        // messagingSenderId: 'YOUR_MESSAGING_SENDER_ID',
+        // appId: 'YOUR_APP_ID'
+      };
+      
+      try {
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        
+        // Make db available globally
+        window.firebaseDb = db;
+        console.log('Firebase initialized successfully');
+      } catch (error) {
+        console.error('Firebase initialization error:', error);
+        window.firebaseDb = null;
+      }
+    </script>
     <style>
       :root {
         --bg-1: #0f172a;
@@ -207,6 +239,7 @@
         padding: 2rem;
         transition: all 0.3s ease;
         backdrop-filter: blur(4px);
+        cursor: pointer;
       }
       .project-card:hover {
         transform: translateY(-5px);
@@ -222,6 +255,568 @@
         font-size: 1rem;
         color: rgba(226, 232, 240, 0.8);
         margin: 0;
+      }
+      /* Pandas page styles */
+      .pandas-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 2rem;
+        margin-top: 2rem;
+        width: 100%;
+      }
+      .panda-card {
+        background: rgba(30, 41, 59, 0.6);
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        border-radius: 16px;
+        padding: 2rem;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(4px);
+      }
+      .panda-card:hover {
+        transform: translateY(-5px);
+        border-color: rgba(96, 165, 250, 0.4);
+        box-shadow: 0 10px 30px rgba(96, 165, 250, 0.25);
+      }
+      .panda-card h3 {
+        margin: 0 0 1rem 0;
+        font-size: 1.5rem;
+        color: var(--accent-2);
+      }
+      .panda-card .field {
+        margin: 0.75rem 0;
+      }
+      .panda-card .field-label {
+        font-weight: 600;
+        color: var(--accent-1);
+        font-size: 0.9rem;
+        margin-bottom: 0.25rem;
+      }
+      .panda-card .field-value {
+        color: rgba(226, 232, 240, 0.9);
+        font-size: 1rem;
+        background: transparent;
+      }
+      .loading {
+        text-align: center;
+        padding: 2rem;
+        color: var(--accent-2);
+        font-size: 1.2rem;
+      }
+      .error {
+        text-align: center;
+        padding: 2rem;
+        color: #ff6b6b;
+        font-size: 1.1rem;
+      }
+      .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: rgba(226, 232, 240, 0.7);
+        font-size: 1.1rem;
+      }
+      /* Add document button */
+      .add-document-btn {
+        background: linear-gradient(90deg, var(--accent-1), var(--accent-2));
+        color: var(--text);
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(96, 165, 250, 0.3);
+      }
+      .add-document-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(96, 165, 250, 0.4);
+      }
+      .add-document-btn:active {
+        transform: translateY(0);
+      }
+      /* Form styles */
+      .form-group {
+        margin-bottom: 1.5rem;
+      }
+      .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: #000;
+        font-weight: 600;
+        font-size: 0.95rem;
+      }
+      .form-group input,
+      .form-group textarea {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid var(--hw-border);
+        border-radius: 8px;
+        background: #fff;
+        color: #000;
+        font-size: 1rem;
+        font-family: inherit;
+      }
+      .form-group input:focus,
+      .form-group textarea:focus {
+        outline: none;
+        border-color: var(--accent-2);
+        box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
+      }
+      .form-group textarea {
+        min-height: 80px;
+        resize: vertical;
+      }
+      .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+      }
+      .form-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-end;
+        margin-top: 2rem;
+      }
+      .btn-primary {
+        background: var(--hw-red);
+        color: #fff;
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+      .btn-primary:hover {
+        filter: brightness(0.95);
+        transform: translateY(-2px);
+      }
+      .btn-secondary {
+        background: transparent;
+        color: #000;
+        border: 1px solid var(--hw-border);
+        padding: 0.75rem 2rem;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+      .btn-secondary:hover {
+        border-color: var(--hw-red);
+        background: var(--hw-gray-100);
+      }
+      .add-field-btn {
+        background: var(--hw-gray-100);
+        color: var(--hw-red);
+        border: 1px dashed var(--hw-red);
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        font-size: 0.9rem;
+        cursor: pointer;
+        margin-top: 0.5rem;
+        transition: all 0.3s ease;
+        width: 100%;
+      }
+      .add-field-btn:hover {
+        background: rgba(200, 16, 46, 0.1);
+        border-color: var(--hw-red);
+      }
+      .field-item {
+        background: #f4f6f8;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        border: 1px solid var(--hw-border);
+      }
+      .field-item-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.75rem;
+      }
+      .field-item-header label {
+        margin: 0;
+        flex: 1;
+        margin-right: 1rem;
+        color: #000;
+      }
+      .remove-field-btn {
+        background: rgba(255, 107, 107, 0.2);
+        color: #ff6b6b;
+        border: none;
+        padding: 0.25rem 0.75rem;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        transition: all 0.3s ease;
+      }
+      .remove-field-btn:hover {
+        background: rgba(255, 107, 107, 0.3);
+      }
+      .geopoint-toggle {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+        margin-bottom: 0.5rem;
+      }
+      .geopoint-toggle input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+      }
+      .geopoint-toggle label {
+        margin: 0;
+        font-weight: 400;
+        cursor: pointer;
+        color: #000;
+      }
+      .field-name,
+      .field-value {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid rgba(148, 163, 184, 0.3);
+        border-radius: 8px;
+        background: #fff;
+        color: #000;
+        font-size: 1rem;
+        font-family: inherit;
+        margin-bottom: 0.5rem;
+      }
+      .field-name:focus,
+      .field-value:focus,
+      .geopoint-lat:focus,
+      .geopoint-lng:focus {
+        outline: none;
+        border-color: var(--hw-red);
+        box-shadow: 0 0 0 3px rgba(200, 16, 46, 0.1);
+      }
+      .geopoint-lat,
+      .geopoint-lng {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid rgba(148, 163, 184, 0.3);
+        border-radius: 8px;
+        background: #fff;
+        color: #000;
+        font-size: 1rem;
+        font-family: inherit;
+      }
+      /* Modal styles */
+      .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 1000;
+        background: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(8px);
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        overflow-y: auto;
+      }
+      .modal.active {
+        display: flex;
+      }
+      /* Cauchy-Schwarz Widget Styles - Original admin.css */
+      .modal-content {
+        --hw-black: #231f20;
+        --hw-red: #c8102e;
+        --hw-gold: #f0b323;
+        --hw-gray-900: #1f2937;
+        --hw-gray-800: #374151;
+        --hw-gray-700: #4b5563;
+        --hw-gray-600: #6b7280;
+        --hw-gray-500: #9ca3af;
+        --hw-gray-400: #cbd5e1;
+        --hw-gray-300: #e5e7eb;
+        --hw-gray-200: #edf0f3;
+        --hw-gray-100: #f4f6f8;
+        --hw-surface: #ffffff;
+        --hw-font-sans: "Source Sans 3","Source Sans Pro","Source Sans", Arial, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", sans-serif;
+        --hw-font-weight-black: 900;
+        --hw-font-weight-bold: 700;
+        --hw-font-weight-semib: 600;
+        --hw-font-weight-reg: 400;
+        --hw-font-weight-light: 300;
+        --hw-radius: 8px;
+        --hw-radius-sm: 6px;
+        --hw-radius-xs: 4px;
+        --hw-border: #e5e7eb;
+        --hw-shadow: 0 1px 3px rgba(0,0,0,.08);
+        --hw-focus-ring: 0 0 0 3px rgba(200,16,46,.18);
+        font-family: var(--hw-font-sans);
+        color: #000;
+        background: #fff;
+        border: 1px solid var(--hw-border);
+        border-radius: var(--hw-radius);
+        padding: 1.5rem;
+        max-width: 1200px;
+        width: 100%;
+        max-height: 90vh;
+        overflow-y: auto;
+        position: relative;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+      .modal-close {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: transparent;
+        border: none;
+        color: #6b7280;
+        font-size: 1.5rem;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+        z-index: 10;
+        font-weight: 300;
+        line-height: 1;
+      }
+      .modal-close:hover {
+        background: #f4f6f8;
+        color: #c8102e;
+        transform: rotate(90deg);
+      }
+      .cs-widget {
+        font-family: var(--hw-font-sans);
+        color: #000;
+        text-align: left;
+      }
+      .cs-widget .h2 {
+        font-size: clamp(1.5rem, 1.35rem + 1vw, 1.875rem);
+        line-height: 1.25;
+        font-weight: var(--hw-font-weight-black);
+        margin: 0 0 0.5rem;
+        color: #000;
+        background: none;
+        -webkit-text-fill-color: #000;
+      }
+      .cs-widget .muted {
+        color: var(--hw-gray-600);
+        font-size: clamp(1rem, .95rem + .3vw, 1.1rem);
+        margin-bottom: 1.5rem;
+      }
+      .cs-widget .value {
+        font-weight: var(--hw-font-weight-bold);
+        color: var(--hw-red);
+      }
+      .cs-widget .grid {
+        display: grid;
+        gap: 0.75rem;
+      }
+      @media (min-width: 768px) {
+        .cs-widget .grid-2\@md {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+      .cs-widget .panel {
+        background: var(--hw-surface);
+        border: 1px solid var(--hw-border);
+        border-radius: var(--hw-radius);
+        padding: 1rem;
+        box-shadow: var(--hw-shadow);
+      }
+      .cs-widget .field {
+        display: grid;
+        gap: 0.35rem;
+        margin-bottom: 1.5rem;
+      }
+      .cs-widget .field:last-child {
+        margin-bottom: 0;
+      }
+      .cs-widget label,
+      .cs-widget .label {
+        font-weight: var(--hw-font-weight-bold);
+        color: #000;
+        font-size: clamp(.85rem, .78rem + .2vw, .95rem);
+        margin-bottom: 0.25rem;
+        display: block;
+      }
+      .cs-widget .range {
+        width: 100%;
+        margin: 0.25rem 0;
+        appearance: none;
+        -webkit-appearance: none;
+        background: var(--hw-gray-200);
+        height: 6px;
+        border-radius: 3px;
+        outline: none;
+      }
+      .cs-widget .range::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 16px;
+        height: 16px;
+        background: var(--hw-red);
+        border-radius: 50%;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+      .cs-widget .range::-webkit-slider-thumb:hover {
+        transform: scale(1.1);
+      }
+      .cs-widget .range::-moz-range-thumb {
+        width: 16px;
+        height: 16px;
+        background: var(--hw-red);
+        border-radius: 50%;
+        cursor: pointer;
+        border: none;
+        transition: all 0.2s ease;
+      }
+      .cs-widget .range::-moz-range-thumb:hover {
+        transform: scale(1.1);
+      }
+      .cs-widget .helper-text {
+        color: var(--hw-gray-600);
+        font-size: 0.85rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 0.5rem;
+      }
+      .cs-widget .inline {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .cs-widget .divider {
+        border-top: 1px solid var(--hw-border);
+        margin: 0.75rem 0;
+      }
+      .cs-widget .inline-controls {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .cs-widget .checkbox {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        font-size: clamp(1rem, .95rem + .3vw, 1.1rem);
+        cursor: pointer;
+        color: #000;
+      }
+      .cs-widget .checkbox input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+      }
+      .cs-widget .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 44px;
+        padding: 0.55rem 1rem;
+        gap: 0.5rem;
+        border-radius: var(--hw-radius-sm);
+        background: var(--hw-red);
+        color: #fff;
+        border: 1px solid transparent;
+        font-weight: var(--hw-font-weight-semib);
+        text-decoration: none;
+        cursor: pointer;
+        transition: 0.2s ease;
+        font-family: var(--hw-font-sans);
+      }
+      .cs-widget .btn:hover {
+        filter: brightness(0.95);
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+      .cs-widget .btn:disabled {
+        background: var(--hw-gray-400);
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+      }
+      .cs-widget .btn--sm {
+        min-height: 36px;
+        padding: 0.35rem 0.7rem;
+        font-size: clamp(.85rem, .78rem + .2vw, .95rem);
+      }
+      .cs-widget .btn--ghost {
+        background: transparent;
+        color: var(--hw-red);
+        border-color: transparent;
+      }
+      .cs-widget .btn--ghost:hover {
+        background: var(--hw-gray-100);
+      }
+      .cs-legend {
+        display: flex;
+        gap: 0.8rem;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-top: 0.6rem;
+      }
+      .cs-legend .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: clamp(.85rem, .78rem + .2vw, .95rem);
+        color: #000;
+      }
+      .cs-legend .dot {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        display: inline-block;
+      }
+      .dot--u {
+        background: var(--hw-black);
+      }
+      .dot--v {
+        background: var(--hw-red);
+      }
+      .dot--proj {
+        background: var(--hw-gold);
+      }
+      .stat {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 0.5rem;
+        align-items: center;
+      }
+      .stat > div:first-child {
+        font-size: clamp(.85rem, .78rem + .2vw, .95rem);
+        color: #000;
+      }
+      .bar {
+        height: 10px;
+        background: var(--hw-gray-200);
+        border-radius: 999px;
+        overflow: hidden;
+        grid-column: 1 / -1;
+      }
+      .bar > span {
+        display: block;
+        height: 100%;
+        background: var(--hw-red);
+        width: 0%;
+        transition: width 0.2s ease;
+      }
+      .bar--rhs > span {
+        background: var(--hw-black);
+      }
+      .cs-widget canvas {
+        width: 100%;
+        aspect-ratio: 4 / 3;
+        background: #fff;
+        border: 1px solid var(--hw-border);
+        border-radius: var(--hw-radius-sm);
       }
       @keyframes floatIn {
         from { opacity: 0; transform: translateY(16px) scale(.98); }
@@ -322,6 +917,8 @@
       <ul>
         <li><a href="#home" class="nav-link active" data-section="home">Home</a></li>
         <li><a href="#projects" class="nav-link" data-section="projects">Projects</a></li>
+        <li><a href="#pandas" class="nav-link" data-section="pandas">Pandas</a></li>
+        <li><a href="#leaderboard" class="nav-link" data-section="leaderboard">Leaderboard</a></li>
         <li><a href="#about" class="nav-link" data-section="about">About</a></li>
       </ul>
     </nav>
@@ -337,10 +934,196 @@
       <div class="content">
         <h2>Projects</h2>
         <div class="projects-grid">
-          <div class="project-card">
-            <h3>Pong Game</h3>
-            <p>This is a game of pong, played against an AI, with an angry bird integration.</p>
+          <div class="project-card" data-project="cauchy-schwarz">
+            <h3>Cauchy-Schwarz Inequality Simulator</h3>
+            <p>An interactive visualization demonstrating the Cauchy-Schwarz inequality for vectors in ℝ². Adjust vector magnitudes and angles to explore the relationship |⟨u, v⟩| ≤ ∥u∥ · ∥v∥.</p>
           </div>
+          <div class="project-card" data-project="pong">
+            <h3>Pong Game</h3>
+            <p>A simple pong game, played against an AI, with an angry bird integration.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Cauchy-Schwarz Simulator Modal -->
+    <div id="cauchySchwarzModal" class="modal">
+      <div class="modal-content">
+        <button class="modal-close" aria-label="Close">&times;</button>
+        <div class="cs-widget">
+          <div class="container">
+            <h1 class="h2">Cauchy–Schwarz Inequality</h1>
+            <p class="muted">For vectors u, v in ℝ²: <span class="value">|⟨u, v⟩| ≤ ∥u∥ · ∥v∥</span></p>
+            <div class="grid grid-2@md">
+              <div class="panel">
+                <div class="field">
+                  <label>u magnitude</label>
+                  <input id="uMag" class="range" type="range" min="0" max="5" step="0.1" value="3" />
+                  <div class="helper-text inline">
+                    <span>0</span>
+                    <span class="muted" style="margin-left:auto;">current</span>
+                    <span id="uMagVal" class="value">3.0</span>
+                  </div>
+                </div>
+                <div class="field">
+                  <label>u angle (degrees)</label>
+                  <input id="uAng" class="range" type="range" min="-180" max="180" step="1" value="-20" />
+                  <div class="helper-text inline">
+                    <span>-180°</span>
+                    <span class="muted" style="margin-left:auto;">current</span>
+                    <span id="uAngVal" class="value">-20°</span>
+                  </div>
+                </div>
+                <div class="divider"></div>
+                <div class="field">
+                  <label>v magnitude</label>
+                  <input id="vMag" class="range" type="range" min="0" max="5" step="0.1" value="2.2" />
+                  <div class="helper-text inline">
+                    <span>0</span>
+                    <span class="muted" style="margin-left:auto;">current</span>
+                    <span id="vMagVal" class="value">2.2</span>
+                  </div>
+                </div>
+                <div class="field">
+                  <label>v angle (degrees)</label>
+                  <input id="vAng" class="range" type="range" min="-180" max="180" step="1" value="55" />
+                  <div class="helper-text inline">
+                    <span>-180°</span>
+                    <span class="muted" style="margin-left:auto;">current</span>
+                    <span id="vAngVal" class="value">55°</span>
+                  </div>
+                </div>
+                <div class="inline-controls" style="margin-top:.5rem;">
+                  <label class="checkbox"><input id="lockEq" type="checkbox" /> <span>Lock to equality (colinear)</span></label>
+                  <label class="checkbox"><input id="showProj" type="checkbox" checked /> <span>Show projection of v onto u</span></label>
+                </div>
+                <div class="inline-controls" style="margin-top:.75rem; gap:.5rem;">
+                  <button id="randomize" class="btn btn--sm">Randomize</button>
+                  <button id="reset" class="btn btn--ghost btn--sm">Reset</button>
+                </div>
+              </div>
+              <div class="panel">
+                <canvas id="csCanvas" width="640" height="480" aria-label="Cauchy–Schwarz visualization"></canvas>
+                <div class="cs-legend" style="margin-top:.6rem;">
+                  <span class="chip"><span class="dot dot--u"></span>u</span>
+                  <span class="chip"><span class="dot dot--v"></span>v</span>
+                  <span class="chip"><span class="dot dot--proj"></span>projection of v onto u</span>
+                </div>
+                <div class="panel" style="margin-top:.75rem;">
+                  <div class="stat">
+                    <div>Left side |⟨u, v⟩|</div>
+                    <div class="value" id="lhsVal">0.00</div>
+                    <div class="bar"><span id="lhsBar"></span></div>
+                  </div>
+                  <div class="stat" style="margin-top:.5rem;">
+                    <div>Right side ∥u∥ · ∥v∥</div>
+                    <div class="value" id="rhsVal">0.00</div>
+                    <div class="bar bar--rhs"><span id="rhsBar"></span></div>
+                  </div>
+                  <p id="eqNote" class="helper-text" style="margin-top:.5rem;">Strict inequality (vectors are not colinear).</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Username Prompt Modal -->
+    <div id="usernameModal" class="modal">
+      <div class="modal-content" style="max-width: 500px;" onclick="event.stopPropagation();">
+        <h2 style="margin-top: 0; color: #000;">Welcome!</h2>
+        <p style="color: #000; margin-bottom: 1.5rem;">Please enter your username to play and appear on the leaderboard:</p>
+        <form id="username-form">
+          <div class="form-group">
+            <label for="username-input" style="color: #000;">Username</label>
+            <input type="text" id="username-input" name="username" placeholder="Enter your username" required maxlength="50" style="width: 100%; padding: 0.75rem; border: 1px solid var(--hw-border); border-radius: 8px; background: #fff; color: #000; font-size: 1rem; font-family: inherit;">
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn-primary">Continue</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Pong Game Modal -->
+    <div id="pongModal" class="modal">
+      <div class="modal-content" style="max-width: 1200px; padding: 0; background: #c7f9cc;">
+        <button class="modal-close" aria-label="Close" style="color: #1a1a1a;">&times;</button>
+        <div style="position: relative; width: 100%; padding-top: 56.25%; background: #c7f9cc;">
+          <canvas id="pongGame" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; touch-action: none;"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <section id="pandas">
+      <div class="content">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+          <h2 style="margin: 0;">Pandas Collection</h2>
+          <button id="add-document-btn" class="add-document-btn">+ Add Panda</button>
+        </div>
+        <div id="pandas-container">
+          <div class="loading">Loading pandas data...</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Add Document Modal -->
+    <div id="addDocumentModal" class="modal">
+      <div class="modal-content" style="max-width: 600px;">
+        <button class="modal-close" aria-label="Close">&times;</button>
+        <h2 style="margin-top: 0; color: #000;">Add New Panda</h2>
+        <form id="add-document-form">
+          <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label for="document-name">Panda Name</label>
+            <input type="text" id="document-name" name="document-name" placeholder="Name of Panda" style="width: 100%; padding: 0.75rem; border: 1px solid var(--hw-border); border-radius: 8px; background: #fff; color: #000; font-size: 1rem; font-family: inherit;">
+          </div>
+          <div id="form-fields">
+            <div class="field-item">
+              <div class="field-item-header">
+                <label>Field Name</label>
+                <button type="button" class="remove-field-btn">Remove</button>
+              </div>
+              <input type="text" class="field-name" placeholder="e.g., name" required>
+              <div class="geopoint-toggle">
+                <input type="checkbox" class="is-geopoint">
+                <label>This is a GeoPoint (location)</label>
+              </div>
+              <div class="field-value-container">
+                <input type="text" class="field-value" placeholder="Value">
+              </div>
+              <div class="geopoint-inputs" style="display: none; margin-top: 0.75rem;">
+                <div class="form-row">
+                  <div class="form-group">
+                    <label>Latitude</label>
+                    <input type="number" class="geopoint-lat" step="any" placeholder="e.g., 37.7749">
+                  </div>
+                  <div class="form-group">
+                    <label>Longitude</label>
+                    <input type="number" class="geopoint-lng" step="any" placeholder="e.g., -122.4194">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <button type="button" class="add-field-btn" id="add-field-btn" style="display: none;">+ Add Field</button>
+          <div class="form-actions">
+            <button type="button" class="btn-secondary" id="cancel-add-btn">Cancel</button>
+            <button type="submit" class="btn-primary">Add Panda</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <section id="leaderboard">
+      <div class="content">
+        <h2>Pong Game Leaderboard</h2>
+        <div id="leaderboard-container">
+          <div class="loading">Loading leaderboard...</div>
+        </div>
+        <div style="margin-top: 2rem; padding: 1rem; background: rgba(30, 41, 59, 0.5); border-radius: 8px;">
+          <h3 style="margin-top: 0; color: var(--accent-2);">Your Best Score</h3>
+          <p id="best-score-display" style="margin: 0.5rem 0; font-size: 1.2rem;">0 : 0</p>
         </div>
       </div>
     </section>
@@ -349,8 +1132,8 @@
       <div class="content">
         <h2>About Me</h2>
         <p>
-          I'm Angela Yuan, and this is my personal portfolio website. 
-          I am a senior at Harvard-Westlake School, and I am interested in computer science. 
+          Welcome! I'm Angela Yuan, and this is my personal portfolio website. 
+          Here you can learn more about my work, projects, and what I'm passionate about.
         </p>
         <p>
           Feel free to explore my projects and reach out if you'd like to connect!
@@ -359,38 +1142,1571 @@
     </section>
 
     <script>
-      // Navigation functionality
-      const navLinks = document.querySelectorAll('.nav-link');
-      const sections = document.querySelectorAll('section');
+      // Wait for DOM to be fully loaded
+      document.addEventListener('DOMContentLoaded', function() {
+        // Navigation functionality
+        const navLinks = document.querySelectorAll('.nav-link');
+        const sections = document.querySelectorAll('section');
 
-      navLinks.forEach(link => {
-        link.addEventListener('click', (e) => {
-          e.preventDefault();
-          const targetSection = link.getAttribute('data-section');
+        navLinks.forEach(link => {
+          link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const targetSection = link.getAttribute('data-section');
 
-          // Update active nav link
-          navLinks.forEach(l => l.classList.remove('active'));
-          link.classList.add('active');
+            // Update active nav link
+            navLinks.forEach(l => l.classList.remove('active'));
+            link.classList.add('active');
 
-          // Show target section, hide others
-          sections.forEach(section => {
-            section.classList.remove('active');
+            // Show target section, hide others
+            sections.forEach(section => {
+              section.classList.remove('active');
+            });
+            document.getElementById(targetSection).classList.add('active');
+
+            // Smooth scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
           });
-          document.getElementById(targetSection).classList.add('active');
-
-          // Smooth scroll to top
-          window.scrollTo({ top: 0, behavior: 'smooth' });
         });
+
+        // Handle initial hash
+        if (window.location.hash) {
+          const hash = window.location.hash.substring(1);
+          const targetLink = document.querySelector(`[data-section="${hash}"]`);
+          if (targetLink) {
+            targetLink.click();
+          }
+        }
+
+        // Modal functionality
+        const cauchySchwarzCard = document.querySelector('[data-project="cauchy-schwarz"]');
+        const cauchySchwarzModal = document.getElementById('cauchySchwarzModal');
+
+        if (cauchySchwarzCard && cauchySchwarzModal) {
+          const modalClose = cauchySchwarzModal.querySelector('.modal-close');
+          
+          cauchySchwarzCard.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            cauchySchwarzModal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            // Small delay to ensure modal is visible before initializing
+            setTimeout(() => {
+              initCauchySchwarzWidget();
+            }, 100);
+          });
+
+          function closeModal() {
+            cauchySchwarzModal.classList.remove('active');
+            document.body.style.overflow = '';
+          }
+
+          if (modalClose) {
+            modalClose.addEventListener('click', closeModal);
+          }
+
+          cauchySchwarzModal.addEventListener('click', (e) => {
+            if (e.target === cauchySchwarzModal) {
+              closeModal();
+            }
+          });
+
+          document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && cauchySchwarzModal.classList.contains('active')) {
+              closeModal();
+            }
+          });
+        }
+
+        // Pong Game Modal functionality
+        const pongCard = document.querySelector('[data-project="pong"]');
+        const pongModal = document.getElementById('pongModal');
+
+        if (pongCard && pongModal) {
+          const pongModalClose = pongModal.querySelector('.modal-close');
+          let pongGameInitialized = false;
+          
+          pongCard.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            pongModal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            // Small delay to ensure modal is visible before initializing
+            setTimeout(() => {
+              if (!pongGameInitialized) {
+                initPongGame();
+                pongGameInitialized = true;
+              }
+            }, 100);
+          });
+
+          function closePongModal() {
+            pongModal.classList.remove('active');
+            document.body.style.overflow = '';
+          }
+
+          if (pongModalClose) {
+            pongModalClose.addEventListener('click', closePongModal);
+          }
+
+          pongModal.addEventListener('click', (e) => {
+            if (e.target === pongModal) {
+              closePongModal();
+            }
+          });
+
+          document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && pongModal.classList.contains('active')) {
+              closePongModal();
+            }
+          });
+        }
       });
 
-      // Handle initial hash
-      if (window.location.hash) {
-        const hash = window.location.hash.substring(1);
-        const targetLink = document.querySelector(`[data-section="${hash}"]`);
-        if (targetLink) {
-          targetLink.click();
+      // Cauchy-Schwarz Widget JavaScript
+      function initCauchySchwarzWidget() {
+        const canvas = document.getElementById('csCanvas');
+        if (!canvas) return;
+        // Prevent duplicate initialization
+        if (canvas.dataset.initialized === 'true') return;
+        canvas.dataset.initialized = 'true';
+        
+        const $ = (id) => document.getElementById(id);
+        const uMag = $('uMag');
+        const uAng = $('uAng');
+        const vMag = $('vMag');
+        const vAng = $('vAng');
+        const uMagVal = $('uMagVal');
+        const uAngVal = $('uAngVal');
+        const vMagVal = $('vMagVal');
+        const vAngVal = $('vAngVal');
+        const lockEq = $('lockEq');
+        const showProj = $('showProj');
+        const randomize = $('randomize');
+        const reset = $('reset');
+        const ctx = canvas.getContext('2d');
+        const lhsVal = $('lhsVal');
+        const rhsVal = $('rhsVal');
+        const lhsBar = $('lhsBar');
+        const rhsBar = $('rhsBar');
+        const eqNote = $('eqNote');
+        const theme = {
+          black: '#231f20',
+          red: '#c8102e',
+          gold: '#f0b323',
+          axis: '#e5e7eb',
+          text: '#000'
+        };
+
+        function degToRad(d) { return (d * Math.PI) / 180; }
+        function round(n, p = 2) { return Math.round(n * 10 ** p) / 10 ** p; }
+        function vecFromPolar(mag, deg) {
+          const r = degToRad(deg);
+          return [mag * Math.cos(r), mag * Math.sin(r)];
+        }
+        function dot(ax, ay, bx, by) { return ax * bx + ay * by; }
+        function norm(ax, ay) { return Math.hypot(ax, ay); }
+        function project(bx, by, ax, ay) {
+          const denom = dot(ax, ay, ax, ay);
+          if (denom === 0) return [0, 0];
+          const scale = dot(bx, by, ax, ay) / denom;
+          return [scale * ax, scale * ay];
+        }
+        function state() {
+          let uA = parseFloat(uAng.value);
+          let vA = parseFloat(vAng.value);
+          if (lockEq.checked) {
+            const sameDir = Math.cos(degToRad(vA - uA)) >= 0;
+            vA = sameDir ? uA : modAngle(uA + 180);
+            vAng.value = String(Math.round(vA));
+            vAngVal.textContent = `${Math.round(vA)}°`;
+          }
+          const [ux, uy] = vecFromPolar(parseFloat(uMag.value), parseFloat(uA));
+          const [vx, vy] = vecFromPolar(parseFloat(vMag.value), parseFloat(vA));
+          return { ux, uy, vx, vy };
+        }
+        function modAngle(a) {
+          let x = a % 360; if (x > 180) x -= 360; if (x < -180) x += 360; return x;
+        }
+        function updateLabels() {
+          uMagVal.textContent = parseFloat(uMag.value).toFixed(1);
+          vMagVal.textContent = parseFloat(vMag.value).toFixed(1);
+          uAngVal.textContent = `${Math.round(parseFloat(uAng.value))}°`;
+          vAngVal.textContent = `${Math.round(parseFloat(vAng.value))}°`;
+        }
+        function draw() {
+          const { ux, uy, vx, vy } = state();
+          const uLen = norm(ux, uy);
+          const vLen = norm(vx, vy);
+          const dp = dot(ux, uy, vx, vy);
+          const lhs = Math.abs(dp);
+          const rhs = uLen * vLen;
+          lhsVal.textContent = round(lhs, 3).toFixed(3);
+          rhsVal.textContent = round(rhs, 3).toFixed(3);
+          const ratio = rhs > 0 ? Math.min(1, lhs / rhs) : 0;
+          lhsBar.style.width = `${(ratio * 100).toFixed(1)}%`;
+          rhsBar.style.width = '100%';
+          eqNote.textContent = (rhs === 0 || Math.abs(lhs - rhs) < 1e-6)
+            ? 'Equality holds (vectors are colinear or one is zero).'
+            : 'Strict inequality (vectors are not colinear).';
+          const w = canvas.width;
+          const h = canvas.height;
+          ctx.clearRect(0, 0, w, h);
+          const margin = 24;
+          const halfW = (w - margin * 2) / 2;
+          const halfH = (h - margin * 2) / 2;
+          const maxVec = Math.max(1, uLen, vLen);
+          const scale = 0.9 * Math.min(halfW, halfH) / maxVec;
+          const cx = w / 2; const cy = h / 2;
+          const toX = (x) => cx + x * scale;
+          const toY = (y) => cy - y * scale;
+          ctx.save();
+          ctx.strokeStyle = theme.axis;
+          ctx.lineWidth = 1;
+          line(cx - halfW, cy, cx + halfW, cy);
+          line(cx, cy - halfH, cx, cy + halfH);
+          ctx.restore();
+          drawVector(0, 0, ux, uy, theme.black);
+          drawVector(0, 0, vx, vy, theme.red);
+          if (showProj.checked) {
+            const [px, py] = project(vx, vy, ux, uy);
+            drawVector(0, 0, px, py, theme.gold, [6, 4]);
+            ctx.save();
+            ctx.setLineDash([4, 4]);
+            ctx.strokeStyle = theme.gold;
+            ctx.lineWidth = 1.2;
+            line(toX(px), toY(py), toX(vx), toY(vy));
+            ctx.restore();
+          }
+          drawAngleArc(ux, uy, vx, vy);
+          function drawVector(x0, y0, x1, y1, color, dash) {
+            ctx.save();
+            if (dash) ctx.setLineDash(dash);
+            ctx.strokeStyle = color;
+            ctx.fillStyle = color;
+            ctx.lineWidth = 2.5;
+            line(toX(x0), toY(y0), toX(x1), toY(y1));
+            const angle = Math.atan2(y1 - y0, x1 - x0);
+            const ah = 8;
+            const ax = toX(x1) - Math.cos(angle) * ah;
+            const ay = toY(y1) + Math.sin(angle) * ah * -1;
+            ctx.beginPath();
+            ctx.moveTo(toX(x1), toY(y1));
+            ctx.lineTo(ax + Math.cos(angle + Math.PI / 2) * 4, ay - Math.sin(angle + Math.PI / 2) * 4);
+            ctx.lineTo(ax + Math.cos(angle - Math.PI / 2) * 4, ay - Math.sin(angle - Math.PI / 2) * 4);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+          }
+          function drawAngleArc(ux, uy, vx, vy) {
+            const a1 = Math.atan2(uy, ux);
+            const a2 = Math.atan2(vy, vx);
+            let d = a2 - a1;
+            while (d > Math.PI) d -= 2 * Math.PI;
+            while (d < -Math.PI) d += 2 * Math.PI;
+            const r = 22;
+            ctx.save();
+            ctx.strokeStyle = theme.black;
+            ctx.lineWidth = 1.2;
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, -a1, -(a1 + d), d < 0);
+            ctx.stroke();
+            const mid = a1 + d / 2;
+            const lx = cx + Math.cos(mid) * (r + 12);
+            const ly = cy - Math.sin(mid) * (r + 12);
+            ctx.fillStyle = theme.black;
+            ctx.font = '12px Inter, Arial, sans-serif';
+            const deg = Math.abs((d * 180) / Math.PI);
+            ctx.fillText(`${round(deg, 1)}°`, lx - 10, ly + 4);
+            ctx.restore();
+          }
+          function line(x1, y1, x2, y2) {
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+          }
+        }
+        function onInput() {
+          updateLabels();
+          draw();
+        }
+        function onRandomize() {
+          uMag.value = (Math.random() * 5).toFixed(1);
+          vMag.value = (Math.random() * 5).toFixed(1);
+          uAng.value = String(Math.round(Math.random() * 360 - 180));
+          vAng.value = String(Math.round(Math.random() * 360 - 180));
+          onInput();
+        }
+        function onReset() {
+          uMag.value = '3';
+          uAng.value = '-20';
+          vMag.value = '2.2';
+          vAng.value = '55';
+          lockEq.checked = false;
+          showProj.checked = true;
+          onInput();
+        }
+        [uMag, uAng, vMag, vAng, lockEq, showProj].forEach((el) => {
+          el.addEventListener('input', onInput);
+          el.addEventListener('change', onInput);
+        });
+        randomize.addEventListener('click', onRandomize);
+        reset.addEventListener('click', onReset);
+        onInput();
+      }
+
+      // Cookie helper functions
+      function setCookie(name, value, days = 365) {
+        const expires = new Date();
+        expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
+        document.cookie = `${name}=${encodeURIComponent(value)};expires=${expires.toUTCString()};path=/`;
+      }
+
+      function getCookie(name) {
+        const nameEQ = name + '=';
+        const ca = document.cookie.split(';');
+        for (let i = 0; i < ca.length; i++) {
+          let c = ca[i];
+          while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+          if (c.indexOf(nameEQ) === 0) return decodeURIComponent(c.substring(nameEQ.length, c.length));
+        }
+        return null;
+      }
+
+      // Username functions
+      function getUsername() {
+        return getCookie('pongUsername') || null;
+      }
+
+      function setUsername(username) {
+        if (username && username.trim()) {
+          setCookie('pongUsername', username.trim());
         }
       }
+
+      // Score comparison functions
+      function compareScores(score1, score2) {
+        // score format: { user: number, computer: number }
+        const diff1 = score1.user - score1.computer;
+        const diff2 = score2.user - score2.computer;
+        const sum1 = score1.user + score1.computer;
+        const sum2 = score2.user + score2.computer;
+
+        // First compare by difference (user - computer)
+        if (diff1 > diff2) return 1; // score1 is better
+        if (diff1 < diff2) return -1; // score2 is better
+
+        // If difference is the same, compare by sum
+        if (sum1 > sum2) return 1; // score1 is better
+        if (sum1 < sum2) return -1; // score2 is better
+
+        return 0; // scores are equal
+      }
+
+      function getBestScore() {
+        const cookieValue = getCookie('pongBestScore');
+        if (!cookieValue) {
+          return { user: 0, computer: 0 };
+        }
+        try {
+          const parts = cookieValue.split(':');
+          return {
+            user: parseInt(parts[0]) || 0,
+            computer: parseInt(parts[1]) || 0
+          };
+        } catch (e) {
+          return { user: 0, computer: 0 };
+        }
+      }
+
+      function setBestScore(userScore, computerScore) {
+        const currentBest = getBestScore();
+        const newScore = { user: userScore, computer: computerScore };
+        
+        if (compareScores(newScore, currentBest) > 0) {
+          setCookie('pongBestScore', `${userScore}:${computerScore}`);
+          updateBestScoreDisplay();
+          return true; // New best score
+        }
+        return false; // Not a new best score
+      }
+
+      function updateBestScoreDisplay() {
+        const bestScore = getBestScore();
+        const display = document.getElementById('best-score-display');
+        if (display) {
+          display.textContent = `${bestScore.user} : ${bestScore.computer}`;
+        }
+      }
+
+      function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      }
+
+      // Leaderboard functions
+      async function saveScoreToLeaderboard(userScore, computerScore) {
+        if (!window.firebaseDb) {
+          console.log('Firebase not initialized, skipping leaderboard save');
+          return;
+        }
+
+        const username = getUsername();
+        if (!username) {
+          console.log('No username set, skipping leaderboard save');
+          return;
+        }
+
+        try {
+          const { collection, query, where, getDocs, doc, setDoc, addDoc, serverTimestamp, orderBy, limit } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+          const leaderboardRef = collection(window.firebaseDb, 'pongLeaderboard');
+          
+          // Query for existing scores with this username
+          const usernameQuery = query(leaderboardRef, where('username', '==', username));
+          const snapshot = await getDocs(usernameQuery);
+          
+          const newScore = {
+            user: userScore,
+            computer: computerScore
+          };
+          
+          if (!snapshot.empty) {
+            // Find the best existing score
+            let bestDoc = null;
+            let bestScore = null;
+            
+            snapshot.forEach((doc) => {
+              const data = doc.data();
+              const score = {
+                user: data.userScore || 0,
+                computer: data.computerScore || 0
+              };
+              
+              if (!bestScore || compareScores(score, bestScore) > 0) {
+                bestScore = score;
+                bestDoc = doc;
+              }
+            });
+            
+            // Compare new score with best existing score
+            if (compareScores(newScore, bestScore) > 0) {
+              // Update the best document with new score
+              await setDoc(bestDoc.ref, {
+                username: username,
+                userScore: userScore,
+                computerScore: computerScore,
+                difference: userScore - computerScore,
+                sum: userScore + computerScore,
+                timestamp: serverTimestamp()
+              });
+              console.log('Updated best score for', username);
+              
+              // Delete other documents with same username (cleanup duplicates)
+              const deletePromises = [];
+              snapshot.forEach((doc) => {
+                if (doc.id !== bestDoc.id) {
+                  deletePromises.push(
+                    doc.ref.delete().catch(err => {
+                      console.error('Error deleting duplicate score:', err);
+                    })
+                  );
+                }
+              });
+              // Don't await - let it happen in background
+              Promise.all(deletePromises).catch(() => {});
+            } else {
+              console.log('New score not better, keeping existing score');
+            }
+          } else {
+            // No existing score, create new document
+            await addDoc(leaderboardRef, {
+              username: username,
+              userScore: userScore,
+              computerScore: computerScore,
+              difference: userScore - computerScore,
+              sum: userScore + computerScore,
+              timestamp: serverTimestamp()
+            });
+            console.log('Created new score for', username);
+          }
+        } catch (error) {
+          console.error('Error saving score to leaderboard:', error);
+        }
+      }
+
+      // Store the unsubscribe function for the leaderboard listener
+      let leaderboardUnsubscribe = null;
+
+      function renderLeaderboard(snapshot) {
+        const container = document.getElementById('leaderboard-container');
+        if (!container) return;
+
+        if (snapshot.empty) {
+          container.innerHTML = '<div class="empty-state">No scores yet. Be the first to play!</div>';
+          return;
+        }
+
+        const scoresMap = new Map(); // Use Map to deduplicate by username
+        
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          const username = data.username || 'Anonymous';
+          const score = {
+            username: username,
+            userScore: data.userScore || 0,
+            computerScore: data.computerScore || 0,
+            difference: data.difference || 0,
+            sum: data.sum || 0,
+            timestamp: data.timestamp?.toDate() || new Date()
+          };
+          
+          // If username already exists, keep only the better score
+          if (scoresMap.has(username)) {
+            const existingScore = scoresMap.get(username);
+            const existingScoreObj = {
+              user: existingScore.userScore,
+              computer: existingScore.computerScore
+            };
+            const newScoreObj = {
+              user: score.userScore,
+              computer: score.computerScore
+            };
+            
+            // Keep the better score
+            if (compareScores(newScoreObj, existingScoreObj) > 0) {
+              scoresMap.set(username, score);
+            }
+          } else {
+            scoresMap.set(username, score);
+          }
+        });
+
+        // Convert Map to array
+        const scores = Array.from(scoresMap.values());
+
+        // Sort scores: first by difference (descending), then by sum (descending)
+        scores.sort((a, b) => {
+          if (a.difference !== b.difference) {
+            return b.difference - a.difference; // Higher difference is better
+          }
+          return b.sum - a.sum; // Higher sum is better if difference is same
+        });
+
+        // Display top 20 scores
+        const topScores = scores.slice(0, 20);
+        
+        let html = '<div style="overflow-x: auto;"><table style="width: 100%; border-collapse: collapse; margin-top: 1rem;">';
+        html += '<thead><tr style="border-bottom: 2px solid rgba(148, 163, 184, 0.3);">';
+        html += '<th style="padding: 0.75rem; text-align: left; vertical-align: middle; color: var(--accent-2); font-weight: 600; width: 80px;">Rank</th>';
+        html += '<th style="padding: 0.75rem; text-align: left; vertical-align: middle; color: var(--accent-2); font-weight: 600;">Username</th>';
+        html += '<th style="padding: 0.75rem; text-align: left; vertical-align: middle; color: var(--accent-2); font-weight: 600; width: 120px;">Score</th>';
+        html += '</tr></thead><tbody>';
+
+        topScores.forEach((score, index) => {
+          const rank = index + 1;
+          const isTopThree = rank <= 3;
+          html += `<tr style="border-bottom: 1px solid rgba(148, 163, 184, 0.1); ${isTopThree ? 'background: rgba(96, 165, 250, 0.1);' : ''}">`;
+          html += `<td style="padding: 0.75rem; text-align: left; vertical-align: middle; font-weight: ${isTopThree ? '700' : '400'}; color: ${isTopThree ? 'var(--accent-2)' : 'var(--text)'}; width: 80px;">${rank}</td>`;
+          html += `<td style="padding: 0.75rem; text-align: left; vertical-align: middle; font-weight: ${isTopThree ? '600' : '400'};">${escapeHtml(score.username)}</td>`;
+          html += `<td style="padding: 0.75rem; text-align: left; vertical-align: middle; width: 120px;">${score.userScore} : ${score.computerScore}</td>`;
+          html += '</tr>';
+        });
+
+        html += '</tbody></table></div>';
+        container.innerHTML = html;
+      }
+
+      async function loadLeaderboard() {
+        const container = document.getElementById('leaderboard-container');
+        if (!container) return;
+
+        // Wait for Firebase to initialize
+        let attempts = 0;
+        while (!window.firebaseDb && attempts < 50) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+          attempts++;
+        }
+
+        if (!window.firebaseDb) {
+          container.innerHTML = '<div class="error">Firebase not initialized. Please check your Firebase configuration.</div>';
+          return;
+        }
+
+        try {
+          container.innerHTML = '<div class="loading">Loading leaderboard...</div>';
+
+          const { collection, onSnapshot } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+          const leaderboardRef = collection(window.firebaseDb, 'pongLeaderboard');
+          
+          // Unsubscribe from previous listener if it exists
+          if (leaderboardUnsubscribe) {
+            leaderboardUnsubscribe();
+          }
+          
+          // Set up real-time listener that updates automatically
+          leaderboardUnsubscribe = onSnapshot(leaderboardRef, (snapshot) => {
+            renderLeaderboard(snapshot);
+          }, (error) => {
+            console.error('Error listening to leaderboard:', error);
+            container.innerHTML = `<div class="error">Error loading leaderboard: ${error.message}</div>`;
+          });
+        } catch (error) {
+          console.error('Error setting up leaderboard listener:', error);
+          container.innerHTML = `<div class="error">Error loading leaderboard: ${error.message}</div>`;
+        }
+      }
+
+      // Pong Game JavaScript
+      function initPongGame() {
+        const canvas = document.getElementById('pongGame');
+        if (!canvas) return;
+        // Prevent duplicate initialization
+        if (canvas.dataset.initialized === 'true') return;
+        canvas.dataset.initialized = 'true';
+
+        const ctx = canvas.getContext('2d', { alpha: false });
+
+        // Logical (CSS pixel) size, device pixel ratio handled via transform
+        let viewWidth = 0;
+        let viewHeight = 0;
+        let dpr = Math.min(2, window.devicePixelRatio || 1);
+
+        // Game state
+        const paddleWidth = 12;
+        const paddleHeightBase = 100;
+        const paddleInset = 30;
+        const ballDiameter = 14;
+        const angryBirdScale = 4;
+        const initialBallSpeed = 420; // px/s
+        const maxBallSpeed = 900; // px/s
+        const ballSpeedIncrementFactor = 1.035; // per paddle hit
+        const playerSpeed = 700; // px/s
+        const aiMaxSpeed = 380; // px/s (reduced from 480 to make AI easier)
+        const aiTrackingBias = 0.04; // how aggressively AI tracks future y (reduced from 0.08 to make AI less predictive)
+
+        let paddleHeight = paddleHeightBase;
+        let leftPaddleY = 0;
+        let rightPaddleY = 0;
+        let leftPaddleVy = 0;
+        let rightPaddleVy = 0;
+
+        const ball = {
+          x: 0,
+          y: 0,
+          r: (ballDiameter / 2) * angryBirdScale,
+          vx: 0,
+          vy: 0,
+          speed: initialBallSpeed
+        };
+
+        let leftScore = 0;
+        let rightScore = 0;
+        let running = false;
+        let paused = false;
+        let awaitingServe = true;
+        let serveDir = 1; // 1 -> to the right, -1 -> to the left
+        let lastTime = 0;
+        let animationFrameId = null;
+
+        const keys = new Set();
+        let pointerActive = false;
+        let pointerId = null;
+
+        function resize() {
+          dpr = Math.min(2, window.devicePixelRatio || 1);
+          const container = canvas.parentElement;
+          let cssW = container.clientWidth;
+          let cssH = container.clientHeight;
+          
+          // Fallback if container not visible yet
+          if (cssW === 0 || cssH === 0) {
+            cssW = Math.max(320, window.innerWidth * 0.9);
+            cssH = Math.max(240, window.innerHeight * 0.8);
+          }
+          
+          viewWidth = cssW;
+          viewHeight = cssH;
+          canvas.width = Math.floor(cssW * dpr);
+          canvas.height = Math.floor(cssH * dpr);
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+          // Scale paddle size a bit on small screens
+          const shortSide = Math.min(viewWidth, viewHeight);
+          paddleHeight = Math.max(64, Math.min(paddleHeightBase, Math.floor(shortSide * 0.22)));
+
+          // Keep paddles within bounds after resize
+          leftPaddleY = clamp(leftPaddleY, 0, viewHeight - paddleHeight);
+          rightPaddleY = clamp(rightPaddleY, 0, viewHeight - paddleHeight);
+        }
+
+        function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+
+        function resetRound(direction = 1) {
+          ball.x = viewWidth / 2;
+          ball.y = viewHeight / 2;
+          ball.speed = initialBallSpeed * (0.9 + 0.1 * Math.random());
+          const angle = (Math.random() * 0.6 - 0.3) * Math.PI; // -54deg..+54deg
+          ball.vx = Math.cos(angle) * direction;
+          ball.vy = Math.sin(angle);
+          awaitingServe = false;
+        }
+
+        function drawNet() {
+          ctx.save();
+          ctx.strokeStyle = '#333';
+          ctx.lineWidth = 4;
+          ctx.setLineDash([12, 16]);
+          ctx.beginPath();
+          ctx.moveTo(viewWidth / 2, 0);
+          ctx.lineTo(viewWidth / 2, viewHeight);
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        function drawPaddle(x, y) {
+          ctx.fillStyle = '#fff';
+          ctx.fillRect(x, y, paddleWidth, paddleHeight);
+        }
+
+        function drawBall() {
+          ctx.save();
+          ctx.translate(ball.x, ball.y);
+          const r = ball.r;
+
+          // Tail feathers
+          ctx.fillStyle = '#2d2d2d';
+          ctx.beginPath();
+          ctx.moveTo(-r * 1.05, -r * 0.2);
+          ctx.lineTo(-r * 1.35, -r * 0.45);
+          ctx.lineTo(-r * 1.15, r * 0.15);
+          ctx.closePath();
+          ctx.fill();
+
+          // Body
+          ctx.fillStyle = '#c1121f';
+          ctx.beginPath();
+          ctx.arc(0, 0, r, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Belly
+          ctx.fillStyle = '#f8e9d2';
+          ctx.beginPath();
+          ctx.ellipse(-r * 0.05, r * 0.3, r * 0.75, r * 0.55, Math.PI / 20, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Beak (upper and lower)
+          ctx.fillStyle = '#f4a261';
+          ctx.beginPath();
+          ctx.moveTo(r * 0.15, -r * 0.1);
+          ctx.lineTo(r * 1.05, -r * 0.05);
+          ctx.lineTo(r * 0.2, r * 0.15);
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.fillStyle = '#e76f51';
+          ctx.beginPath();
+          ctx.moveTo(r * 0.15, r * 0.05);
+          ctx.lineTo(r * 1.0, r * 0.25);
+          ctx.lineTo(r * 0.2, r * 0.35);
+          ctx.closePath();
+          ctx.fill();
+
+          // Eyes
+          ctx.fillStyle = '#fff';
+          ctx.beginPath();
+          ctx.ellipse(-r * 0.25, -r * 0.25, r * 0.38, r * 0.42, -Math.PI / 40, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.beginPath();
+          ctx.ellipse(r * 0.2, -r * 0.28, r * 0.33, r * 0.38, Math.PI / 24, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Pupils
+          ctx.fillStyle = '#c7f9cc';
+          ctx.beginPath();
+          ctx.arc(-r * 0.2, -r * 0.25, r * 0.16, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(r * 0.12, -r * 0.26, r * 0.14, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Eyebrows
+          ctx.strokeStyle = '#2d2d2d';
+          ctx.lineWidth = r * 0.25;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.moveTo(-r * 0.6, -r * 0.65);
+          ctx.lineTo(-r * 0.05, -r * 0.5);
+          ctx.moveTo(r * 0.05, -r * 0.55);
+          ctx.lineTo(r * 0.55, -r * 0.7);
+          ctx.stroke();
+
+          // Crest feathers
+          ctx.fillStyle = '#b00016';
+          ctx.beginPath();
+          ctx.moveTo(-r * 0.2, -r * 0.9);
+          ctx.quadraticCurveTo(-r * 0.4, -r * 1.35, -r * 0.05, -r * 1.3);
+          ctx.quadraticCurveTo(r * 0.2, -r * 1.28, r * 0.05, -r * 0.85);
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.restore();
+        }
+
+        function drawScore() {
+          const fontSize = Math.max(24, Math.floor(viewWidth * 0.07));
+          ctx.fillStyle = '#fff';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'top';
+          ctx.font = `bold ${fontSize}px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace`;
+          ctx.fillText(`${leftScore}`, viewWidth * 0.25, 20);
+          ctx.fillText(`${rightScore}`, viewWidth * 0.75, 20);
+        }
+
+        function drawOverlay(textLines) {
+          ctx.save();
+          ctx.fillStyle = 'rgba(0,0,0,0.45)';
+          ctx.fillRect(0, 0, viewWidth, viewHeight);
+
+          const titleSize = Math.max(26, Math.floor(viewWidth * 0.06));
+          const infoSize = Math.max(14, Math.floor(viewWidth * 0.025));
+          ctx.textBaseline = 'middle';
+          ctx.textAlign = 'center';
+          ctx.fillStyle = '#fff';
+          ctx.font = `700 ${titleSize}px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif`;
+          ctx.fillText('PONG', viewWidth / 2, viewHeight * 0.35);
+          ctx.font = `500 ${infoSize}px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif`;
+          const baseY = viewHeight * 0.45;
+          for (let i = 0; i < textLines.length; i++) {
+            ctx.fillText(textLines[i], viewWidth / 2, baseY + i * (infoSize + 8));
+          }
+          ctx.restore();
+        }
+
+        function circleRectCollide(cx, cy, r, rx, ry, rw, rh) {
+          const nx = Math.max(rx, Math.min(cx, rx + rw));
+          const ny = Math.max(ry, Math.min(cy, ry + rh));
+          const dx = cx - nx;
+          const dy = cy - ny;
+          return (dx * dx + dy * dy) <= r * r;
+        }
+
+        function step(dtMs) {
+          if (!running || paused) return;
+          const dt = Math.min(32, dtMs) / 1000; // clamp delta to avoid jumps
+
+          // Player control
+          leftPaddleVy = 0;
+          if (keys.has('ArrowUp') || keys.has('KeyW')) leftPaddleVy -= playerSpeed;
+          if (keys.has('ArrowDown') || keys.has('KeyS')) leftPaddleVy += playerSpeed;
+          leftPaddleY = clamp(leftPaddleY + leftPaddleVy * dt, 0, viewHeight - paddleHeight);
+
+          // Simple AI follows ball with capped speed and slight lead (made easier)
+          // Add delay/reaction time to make AI less perfect
+          const ballFutureY = ball.y + (ball.vy * aiTrackingBias * 0.3); // Further reduced prediction
+          const aiTargetY = clamp(ballFutureY, paddleHeight / 2, viewHeight - paddleHeight / 2) - paddleHeight / 2;
+          const aiDelta = aiTargetY - rightPaddleY;
+          // Add more smoothing/delay to AI movement to make it easier
+          const aiStep = clamp(aiDelta * 0.7, -aiMaxSpeed * dt, aiMaxSpeed * dt); // 0.7 factor adds more delay
+          rightPaddleVy = aiStep / dt;
+          rightPaddleY = clamp(rightPaddleY + aiStep, 0, viewHeight - paddleHeight);
+
+          if (!awaitingServe) {
+            // Ball movement
+            ball.x += ball.vx * ball.speed * dt;
+            ball.y += ball.vy * ball.speed * dt;
+
+            // Wall collisions
+            if (ball.y - ball.r < 0) {
+              ball.y = ball.r;
+              ball.vy = Math.abs(ball.vy);
+            } else if (ball.y + ball.r > viewHeight) {
+              ball.y = viewHeight - ball.r;
+              ball.vy = -Math.abs(ball.vy);
+            }
+
+            // Paddle collisions
+            const leftRect = { x: paddleInset, y: leftPaddleY, w: paddleWidth, h: paddleHeight };
+            const rightRect = { x: viewWidth - paddleInset - paddleWidth, y: rightPaddleY, w: paddleWidth, h: paddleHeight };
+
+            if (ball.vx < 0 && circleRectCollide(ball.x, ball.y, ball.r, leftRect.x, leftRect.y, leftRect.w, leftRect.h)) {
+              const centerY = leftRect.y + leftRect.h / 2;
+              const offset = (ball.y - centerY) / (leftRect.h / 2); // -1..1
+              const angle = clamp(offset, -1, 1) * (Math.PI / 3); // up to 60deg
+              const influence = clamp(leftPaddleVy / playerSpeed, -0.25, 0.25);
+              const dirX = 1;
+              const nx = Math.cos(angle) * dirX;
+              const ny = Math.sin(angle) + influence;
+              const len = Math.hypot(nx, ny) || 1;
+              ball.vx = nx / len;
+              ball.vy = ny / len;
+              ball.speed = Math.min(maxBallSpeed, ball.speed * ballSpeedIncrementFactor);
+              ball.x = leftRect.x + leftRect.w + ball.r; // prevent sticking
+            }
+
+            if (ball.vx > 0 && circleRectCollide(ball.x, ball.y, ball.r, rightRect.x, rightRect.y, rightRect.w, rightRect.h)) {
+              const centerY = rightRect.y + rightRect.h / 2;
+              const offset = (ball.y - centerY) / (rightRect.h / 2);
+              const angle = clamp(offset, -1, 1) * (Math.PI / 3);
+              const influence = clamp(rightPaddleVy / aiMaxSpeed, -0.2, 0.2);
+              const dirX = -1;
+              const nx = Math.cos(angle) * dirX;
+              const ny = Math.sin(angle) + influence;
+              const len = Math.hypot(nx, ny) || 1;
+              ball.vx = nx / len;
+              ball.vy = ny / len;
+              ball.speed = Math.min(maxBallSpeed, ball.speed * ballSpeedIncrementFactor);
+              ball.x = rightRect.x - ball.r; // prevent sticking
+            }
+
+            // Scoring
+            if (ball.x + ball.r < 0) {
+              rightScore += 1;
+              serveDir = 1;
+              awaitingServe = true;
+              resetRound(serveDir);
+            } else if (ball.x - ball.r > viewWidth) {
+              leftScore += 1;
+              serveDir = -1;
+              awaitingServe = true;
+              resetRound(serveDir);
+            }
+          }
+        }
+
+        function render() {
+          // Background
+          ctx.fillStyle = '#c7f9cc';
+          ctx.fillRect(0, 0, viewWidth, viewHeight);
+
+          drawNet();
+          drawPaddle(paddleInset, leftPaddleY);
+          drawPaddle(viewWidth - paddleInset - paddleWidth, rightPaddleY);
+          drawBall();
+          drawScore();
+
+          if (!running) {
+            drawOverlay([
+              'Press Space or Click/Tap to Start',
+              'Move: W/S or Arrow Keys; Pause: P; Restart: R',
+              'Drag or tap left side on touch devices'
+            ]);
+          } else if (paused) {
+            drawOverlay(['Paused - Press P to Resume']);
+          }
+        }
+
+        function loop(ts) {
+          if (!lastTime) lastTime = ts;
+          const dt = ts - lastTime;
+          lastTime = ts;
+          step(dt);
+          render();
+          animationFrameId = requestAnimationFrame(loop);
+        }
+
+        function stopGame() {
+          if (animationFrameId !== null) {
+            cancelAnimationFrame(animationFrameId);
+            animationFrameId = null;
+          }
+          
+          // Check and save best score when game stops (if there's any score)
+          if (leftScore > 0 || rightScore > 0) {
+            const isNewBest = setBestScore(leftScore, rightScore);
+            if (isNewBest) {
+              console.log('New best score!', leftScore, ':', rightScore);
+            }
+            // Save to leaderboard
+            saveScoreToLeaderboard(leftScore, rightScore);
+          }
+          
+          running = false;
+          paused = false;
+          keys.clear();
+          pointerActive = false;
+          pointerId = null;
+        }
+
+        function resetGame() {
+          leftScore = 0;
+          rightScore = 0;
+          running = false;
+          paused = false;
+          awaitingServe = true;
+          serveDir = Math.random() < 0.5 ? -1 : 1;
+          leftPaddleY = (viewHeight - paddleHeight) / 2;
+          rightPaddleY = (viewHeight - paddleHeight) / 2;
+          resetRound(serveDir);
+        }
+
+        // Input handlers
+        function handleKeyDown(e) {
+          if (e.code === 'Space') {
+            if (!running) startGame();
+            e.preventDefault();
+            return;
+          }
+          if (e.code === 'KeyP') {
+            if (running) paused = !paused;
+            return;
+          }
+          if (e.code === 'KeyR') {
+            restart();
+            return;
+          }
+          keys.add(e.code);
+        }
+
+        function handleKeyUp(e) {
+          keys.delete(e.code);
+        }
+
+        canvas.addEventListener('pointerdown', (e) => {
+          pointerActive = true;
+          pointerId = e.pointerId;
+          if (!running) startGame();
+          updatePointer(e);
+          canvas.setPointerCapture(pointerId);
+        });
+
+        canvas.addEventListener('pointermove', (e) => {
+          if (!pointerActive || e.pointerId !== pointerId) return;
+          updatePointer(e);
+        });
+
+        canvas.addEventListener('pointerup', (e) => {
+          if (e.pointerId !== pointerId) return;
+          pointerActive = false;
+          pointerId = null;
+          canvas.releasePointerCapture(e.pointerId);
+        });
+
+        function updatePointer(e) {
+          const rect = canvas.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+          // Control only on left half
+          if (x <= rect.width * 0.55) {
+            const targetY = y - paddleHeight / 2;
+            leftPaddleVy = (targetY - leftPaddleY) * 20; // influence for bounce
+            leftPaddleY = clamp(targetY, 0, viewHeight - paddleHeight);
+          }
+        }
+
+        canvas.addEventListener('click', () => {
+          if (!running) startGame();
+        });
+
+        function startGame() {
+          running = true;
+          paused = false;
+          awaitingServe = true;
+          serveDir = Math.random() < 0.5 ? -1 : 1;
+          leftScore = 0;
+          rightScore = 0;
+          resetRound(serveDir);
+        }
+
+        function restart() {
+          running = true;
+          paused = false;
+          leftScore = 0;
+          rightScore = 0;
+          serveDir = Math.random() < 0.5 ? -1 : 1;
+          resetRound(serveDir);
+        }
+
+        // Only attach keyboard handlers when modal is active
+        const pongModal = document.getElementById('pongModal');
+        if (pongModal) {
+          const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+              if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                if (pongModal.classList.contains('active')) {
+                  window.addEventListener('keydown', handleKeyDown, { passive: false });
+                  window.addEventListener('keyup', handleKeyUp);
+                  // Resize when modal becomes visible
+                  // Use multiple attempts to ensure canvas is properly sized
+                  let resizeAttempts = 0;
+                  const ensureResize = () => {
+                    resize();
+                    if ((viewWidth === 0 || viewHeight === 0) && resizeAttempts < 5) {
+                      resizeAttempts++;
+                      requestAnimationFrame(ensureResize);
+                      return;
+                    }
+                    // Canvas is now properly sized
+                    resetGame();
+                    // Render initial frame
+                    render();
+                    // Start the game loop
+                    lastTime = 0;
+                    animationFrameId = requestAnimationFrame(loop);
+                  };
+                  setTimeout(() => {
+                    ensureResize();
+                  }, 50);
+                } else {
+                  // Stop the game when modal closes
+                  stopGame();
+                  window.removeEventListener('keydown', handleKeyDown);
+                  window.removeEventListener('keyup', handleKeyUp);
+                }
+              }
+            });
+          });
+          observer.observe(pongModal, { attributes: true });
+        }
+
+        // Resize observer for container
+        const modalElement = document.getElementById('pongModal');
+        const resizeObserver = new ResizeObserver(() => {
+          if (modalElement && modalElement.classList.contains('active')) {
+            resize();
+          }
+        });
+        if (canvas.parentElement) {
+          resizeObserver.observe(canvas.parentElement);
+        }
+
+        window.addEventListener('resize', resize);
+        // Initial resize to set up canvas dimensions
+        resize();
+        // Initial game state - don't start loop until modal opens
+        resetGame();
+        // Render initial frame so canvas is ready
+        render();
+      }
+
+      // Store field information globally
+      window.pandaFields = {};
+
+      // Pandas Collection Display
+      async function loadPandasData() {
+        const container = document.getElementById('pandas-container');
+        
+        // Wait for Firebase to initialize (with timeout)
+        let attempts = 0;
+        while (!window.firebaseDb && attempts < 50) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+          attempts++;
+        }
+        
+        if (!window.firebaseDb) {
+          container.innerHTML = '<div class="error">Firebase not initialized. Please check your Firebase configuration in the script tag.</div>';
+          return;
+        }
+
+        try {
+          container.innerHTML = '<div class="loading">Loading pandas data...</div>';
+          
+          const { collection, getDocs, GeoPoint } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+          const pandasRef = collection(window.firebaseDb, 'pandas');
+          const snapshot = await getDocs(pandasRef);
+
+          if (snapshot.empty) {
+            container.innerHTML = '<div class="empty-state">No pandas found in the database.</div>';
+            window.pandaFields = {};
+            return;
+          }
+
+          // Collect all unique field names and determine their types
+          const fieldTypes = {};
+          snapshot.forEach((doc) => {
+            const data = doc.data();
+            Object.keys(data).forEach((key) => {
+              const value = data[key];
+              if (!fieldTypes[key]) {
+                // Check if it's a GeoPoint
+                if (value instanceof GeoPoint || (value && typeof value === 'object' && 'latitude' in value && 'longitude' in value)) {
+                  fieldTypes[key] = 'geopoint';
+                } else {
+                  fieldTypes[key] = 'regular';
+                }
+              }
+            });
+          });
+
+          // Store field information globally
+          window.pandaFields = fieldTypes;
+
+          let html = '<div class="pandas-grid">';
+          snapshot.forEach((doc) => {
+            const data = doc.data();
+            html += '<div class="panda-card">';
+            html += `<h3>${doc.id}</h3>`;
+            
+            // Display all fields dynamically in sorted order
+            Object.keys(data).sort().forEach((key) => {
+              const value = data[key];
+              
+              html += `<div class="field">`;
+              html += `<div class="field-label">${key}</div>`;
+              
+              // Handle different data types
+              if (value === null || value === undefined) {
+                html += `<div class="field-value">N/A</div>`;
+              } else if (value instanceof GeoPoint) {
+                // Handle Firestore GeoPoint objects - display on separate lines
+                html += `<div class="field-value">`;
+                html += `Latitude: ${value.latitude.toFixed(6)}<br>`;
+                html += `Longitude: ${value.longitude.toFixed(6)}`;
+                html += `</div>`;
+              } else if (value && typeof value === 'object' && 'latitude' in value && 'longitude' in value) {
+                // Handle GeoPoint-like objects - display on separate lines
+                html += `<div class="field-value">`;
+                html += `Latitude: ${Number(value.latitude).toFixed(6)}<br>`;
+                html += `Longitude: ${Number(value.longitude).toFixed(6)}`;
+                html += `</div>`;
+              } else {
+                let displayValue = value;
+                if (typeof value === 'object' && value.constructor === Object) {
+                  displayValue = JSON.stringify(value, null, 2);
+                } else if (value instanceof Date) {
+                  displayValue = value.toLocaleDateString();
+                } else if (typeof value === 'boolean') {
+                  displayValue = value ? 'Yes' : 'No';
+                }
+                html += `<div class="field-value">${displayValue}</div>`;
+              }
+              
+              html += `</div>`;
+            });
+            
+            html += '</div>';
+          });
+          html += '</div>';
+          container.innerHTML = html;
+        } catch (error) {
+          console.error('Error loading pandas:', error);
+          container.innerHTML = `<div class="error">Error loading pandas: ${error.message}<br><br>Make sure your Firestore rules allow read access to the 'pandas' collection.</div>`;
+        }
+      }
+
+      // Load pandas data when the pandas section becomes active
+      const pandasSection = document.getElementById('pandas');
+      if (pandasSection) {
+        const observer = new MutationObserver((mutations) => {
+          mutations.forEach((mutation) => {
+            if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+              if (pandasSection.classList.contains('active')) {
+                loadPandasData();
+              }
+            }
+          });
+        });
+        observer.observe(pandasSection, { attributes: true });
+      }
+
+      // Load leaderboard when the leaderboard section becomes active
+      const leaderboardSection = document.getElementById('leaderboard');
+      if (leaderboardSection) {
+        const observer = new MutationObserver((mutations) => {
+          mutations.forEach((mutation) => {
+            if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+              if (leaderboardSection.classList.contains('active')) {
+                loadLeaderboard();
+              } else {
+                // Unsubscribe when section becomes inactive to save resources
+                if (leaderboardUnsubscribe) {
+                  leaderboardUnsubscribe();
+                  leaderboardUnsubscribe = null;
+                }
+              }
+            }
+          });
+        });
+        observer.observe(leaderboardSection, { attributes: true });
+      }
+
+      // Add Document Functionality
+      document.addEventListener('DOMContentLoaded', function() {
+        // Initialize best score display on page load
+        updateBestScoreDisplay();
+
+        // Username modal handling
+        const usernameModal = document.getElementById('usernameModal');
+        const usernameForm = document.getElementById('username-form');
+        const usernameInput = document.getElementById('username-input');
+
+        // Check if username exists, if not show modal
+        if (!getUsername()) {
+          if (usernameModal) {
+            usernameModal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            // Focus input after a short delay
+            setTimeout(() => {
+              if (usernameInput) {
+                usernameInput.focus();
+              }
+            }, 100);
+          }
+        } else {
+          // Hide modal if username exists
+          if (usernameModal) {
+            usernameModal.classList.remove('active');
+          }
+        }
+
+        // Handle username form submission
+        if (usernameForm) {
+          usernameForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const username = usernameInput?.value.trim();
+            if (username && username.length > 0) {
+              setUsername(username);
+              if (usernameModal) {
+                usernameModal.classList.remove('active');
+                document.body.style.overflow = '';
+              }
+            }
+          });
+        }
+
+        // Prevent username modal from closing on outside click (username is required)
+        if (usernameModal) {
+          usernameModal.addEventListener('click', function(e) {
+            if (e.target === usernameModal) {
+              e.preventDefault();
+              e.stopPropagation();
+            }
+          });
+        }
+        const addDocumentBtn = document.getElementById('add-document-btn');
+        const addDocumentModal = document.getElementById('addDocumentModal');
+        const addDocumentForm = document.getElementById('add-document-form');
+        const formFields = document.getElementById('form-fields');
+        const addFieldBtn = document.getElementById('add-field-btn');
+        const cancelAddBtn = document.getElementById('cancel-add-btn');
+        const modalClose = addDocumentModal?.querySelector('.modal-close');
+
+        // Open modal
+        if (addDocumentBtn && addDocumentModal) {
+          addDocumentBtn.addEventListener('click', () => {
+            // Check if we have field information
+            if (!window.pandaFields || Object.keys(window.pandaFields).length === 0) {
+              alert('Please wait for pandas to load first, or add a panda manually in Firestore.');
+              return;
+            }
+            
+            // Populate form with existing fields
+            populateFormFields();
+            addDocumentModal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+          });
+        }
+
+        // Populate form fields based on existing pandas
+        function populateFormFields() {
+          const fields = window.pandaFields;
+          const sortedFieldNames = Object.keys(fields).sort();
+          
+          if (sortedFieldNames.length === 0) {
+            formFields.innerHTML = '<div class="empty-state">No fields found. Please add a panda manually in Firestore first.</div>';
+            return;
+          }
+
+          formFields.innerHTML = '';
+          sortedFieldNames.forEach(fieldName => {
+            const isGeoPoint = fields[fieldName] === 'geopoint';
+            const fieldItem = document.createElement('div');
+            fieldItem.className = 'field-item';
+            
+            // Determine input type based on field name
+            let inputType = 'text';
+            let inputPlaceholder = 'Value';
+            if (fieldName === 'age') {
+              inputType = 'number';
+              inputPlaceholder = 'Enter age (number)';
+            } else if (fieldName === 'isFemale') {
+              inputType = 'text';
+              inputPlaceholder = 'true/false, yes/no, or 1/0';
+            } else if (fieldName === 'mother') {
+              inputType = 'text';
+              inputPlaceholder = 'Enter mother name';
+            }
+            
+            fieldItem.innerHTML = `
+              <div class="field-item-header">
+                <label>${fieldName}</label>
+              </div>
+              <input type="text" class="field-name" value="${fieldName}" readonly style="background: #e5e7eb; cursor: not-allowed;">
+              <div class="geopoint-toggle" style="display: none;">
+                <input type="checkbox" class="is-geopoint" ${isGeoPoint ? 'checked' : ''} disabled>
+                <label>This is a GeoPoint (location)</label>
+              </div>
+              <div class="field-value-container" style="${isGeoPoint ? 'display: none;' : ''}">
+                <input type="${inputType}" class="field-value" placeholder="${inputPlaceholder}" ${fieldName === 'age' ? 'step="1"' : ''}>
+              </div>
+              <div class="geopoint-inputs" style="${isGeoPoint ? '' : 'display: none;'} margin-top: 0.75rem;">
+                <div class="form-row">
+                  <div class="form-group">
+                    <label>Latitude</label>
+                    <input type="number" class="geopoint-lat" step="any" placeholder="e.g., 37.7749">
+                  </div>
+                  <div class="form-group">
+                    <label>Longitude</label>
+                    <input type="number" class="geopoint-lng" step="any" placeholder="e.g., -122.4194">
+                  </div>
+                </div>
+              </div>
+            `;
+            formFields.appendChild(fieldItem);
+          });
+          setupFieldHandlers();
+        }
+
+        // Close modal
+        function closeAddModal() {
+          if (addDocumentModal) {
+            addDocumentModal.classList.remove('active');
+            document.body.style.overflow = '';
+            addDocumentForm.reset();
+            // Clear document name input
+            const documentNameInput = document.getElementById('document-name');
+            if (documentNameInput) {
+              documentNameInput.value = '';
+            }
+          }
+        }
+
+        if (modalClose) {
+          modalClose.addEventListener('click', closeAddModal);
+        }
+        if (cancelAddBtn) {
+          cancelAddBtn.addEventListener('click', closeAddModal);
+        }
+        if (addDocumentModal) {
+          addDocumentModal.addEventListener('click', (e) => {
+            if (e.target === addDocumentModal) {
+              closeAddModal();
+            }
+          });
+        }
+
+        // Setup handlers for field items
+        function setupFieldHandlers() {
+          // GeoPoint fields are already set up, no need for toggle handlers since they're disabled
+        }
+
+        // Form submission
+        if (addDocumentForm) {
+          addDocumentForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            if (!window.firebaseDb) {
+              alert('Firebase not initialized. Please check your Firebase configuration.');
+              return;
+            }
+
+            try {
+              const { collection, addDoc, setDoc, doc, GeoPoint } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+              const pandasRef = collection(window.firebaseDb, 'pandas');
+              
+              // Get document name
+              const documentNameInput = document.getElementById('document-name');
+              const documentName = documentNameInput ? documentNameInput.value.trim() : '';
+              
+              // Validate document name if provided
+              if (documentName) {
+                // Firestore document IDs must be valid: no spaces, no special characters except alphanumeric, underscore, and hyphen
+                if (!/^[a-zA-Z0-9_-]+$/.test(documentName)) {
+                  alert('Document name can only contain letters, numbers, underscores, and hyphens. No spaces allowed.');
+                  return;
+                }
+                if (documentName.length > 1500) {
+                  alert('Document name is too long. Maximum length is 1500 characters.');
+                  return;
+                }
+              }
+              
+              const fieldItems = formFields.querySelectorAll('.field-item');
+              const documentData = {};
+              const fields = window.pandaFields;
+
+              for (const fieldItem of fieldItems) {
+                const fieldName = fieldItem.querySelector('.field-name').value.trim();
+                const fieldType = fields[fieldName];
+
+                if (!fieldName || !fieldType) {
+                  continue;
+                }
+
+                if (fieldType === 'geopoint') {
+                  const lat = parseFloat(fieldItem.querySelector('.geopoint-lat').value);
+                  const lng = parseFloat(fieldItem.querySelector('.geopoint-lng').value);
+                  
+                  if (isNaN(lat) || isNaN(lng)) {
+                    alert(`Please provide valid latitude and longitude for field "${fieldName}".`);
+                    return;
+                  }
+                  
+                  documentData[fieldName] = new GeoPoint(lat, lng);
+                } else {
+                  const value = fieldItem.querySelector('.field-value').value.trim();
+                  
+                  // Handle specific fields with required types
+                  if (fieldName === 'age') {
+                    const numValue = parseFloat(value);
+                    if (isNaN(numValue)) {
+                      alert('Age must be a number.');
+                      return;
+                    }
+                    documentData[fieldName] = numValue;
+                  } else if (fieldName === 'isFemale') {
+                    // Convert to boolean
+                    const lowerValue = value.toLowerCase();
+                    if (lowerValue === 'true' || lowerValue === 'yes' || lowerValue === '1') {
+                      documentData[fieldName] = true;
+                    } else if (lowerValue === 'false' || lowerValue === 'no' || lowerValue === '0' || lowerValue === '') {
+                      documentData[fieldName] = false;
+                    } else {
+                      alert('isFemale must be a boolean (true/false, yes/no, or 1/0).');
+                      return;
+                    }
+                  } else if (fieldName === 'mother') {
+                    // Always store as string
+                    documentData[fieldName] = value || '';
+                  } else {
+                    // For other fields, try to parse as number or boolean
+                    if (value === 'true' || value === 'True') {
+                      documentData[fieldName] = true;
+                    } else if (value === 'false' || value === 'False') {
+                      documentData[fieldName] = false;
+                    } else if (value === '') {
+                      documentData[fieldName] = null;
+                    } else if (!isNaN(value) && value !== '') {
+                      documentData[fieldName] = parseFloat(value);
+                    } else {
+                      documentData[fieldName] = value;
+                    }
+                  }
+                }
+              }
+
+              // Add document to Firestore
+              if (documentName) {
+                // Use setDoc with custom document ID
+                const docRef = doc(pandasRef, documentName);
+                await setDoc(docRef, documentData);
+              } else {
+                // Use addDoc for auto-generated ID
+                await addDoc(pandasRef, documentData);
+              }
+              
+              // Close modal and refresh display
+              closeAddModal();
+              await loadPandasData();
+              
+            } catch (error) {
+              console.error('Error adding document:', error);
+              alert(`Error adding document: ${error.message}`);
+            }
+          });
+        }
+      });
+
     </script>
   </body>
 </html>
