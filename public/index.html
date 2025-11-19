@@ -1778,12 +1778,18 @@
         const paddleInset = 30;
         const ballDiameter = 14;
         const angryBirdScale = 4;
-        const initialBallSpeed = 420; // px/s
-        const maxBallSpeed = 900; // px/s
-        const ballSpeedIncrementFactor = 1.035; // per paddle hit
+        const initialBallSpeed = 600; // px/s (increased from 420)
+        const maxBallSpeed = 1200; // px/s (increased from 900)
+        const ballSpeedIncrementFactor = 1.04; // per paddle hit
         const playerSpeed = 700; // px/s
-        const aiMaxSpeed = 380; // px/s (reduced from 480 to make AI easier)
-        const aiTrackingBias = 0.04; // how aggressively AI tracks future y (reduced from 0.08 to make AI less predictive)
+        const aiMaxSpeedBase = 380; // Base AI speed
+        const aiTrackingBias = 0.04; // how aggressively AI tracks future y
+
+        // Obstacle settings
+        const obstacleWidth = 20;
+        const obstacleHeight = 60;
+        const obstacleSpeed = 150; // px/s
+        const numObstacles = 3;
 
         let paddleHeight = paddleHeightBase;
         let leftPaddleY = 0;
@@ -1791,14 +1797,22 @@
         let leftPaddleVy = 0;
         let rightPaddleVy = 0;
 
-        const ball = {
-          x: 0,
-          y: 0,
-          r: (ballDiameter / 2) * angryBirdScale,
-          vx: 0,
-          vy: 0,
-          speed: initialBallSpeed
-        };
+        // Multiple balls (3 total)
+        const balls = [];
+        const numBalls = 3;
+
+        // Combo system
+        let combo = 0;
+        const comboTimeout = 3.0; // 3 seconds to maintain combo
+        let lastHitTime = 0;
+
+        // Difficulty scaling
+        let gameTime = 0;
+        let difficultyMultiplier = 1.0;
+        let currentAiMaxSpeed = aiMaxSpeedBase;
+
+        // Obstacles
+        const obstacles = [];
 
         let leftScore = 0;
         let rightScore = 0;
@@ -1838,18 +1852,51 @@
           // Keep paddles within bounds after resize
           leftPaddleY = clamp(leftPaddleY, 0, viewHeight - paddleHeight);
           rightPaddleY = clamp(rightPaddleY, 0, viewHeight - paddleHeight);
+          
+          // Reinitialize obstacles if game is running
+          if (running && obstacles.length === 0) {
+            initObstacles();
+          }
         }
 
         function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
 
+        function createBall(direction = 1, offset = 0) {
+          return {
+            x: viewWidth / 2 + offset,
+            y: viewHeight / 2 + (Math.random() * 100 - 50),
+            r: (ballDiameter / 2) * angryBirdScale,
+            vx: 0,
+            vy: 0,
+            speed: initialBallSpeed * (0.9 + 0.1 * Math.random())
+          };
+        }
+
         function resetRound(direction = 1) {
-          ball.x = viewWidth / 2;
-          ball.y = viewHeight / 2;
-          ball.speed = initialBallSpeed * (0.9 + 0.1 * Math.random());
-          const angle = (Math.random() * 0.6 - 0.3) * Math.PI; // -54deg..+54deg
-          ball.vx = Math.cos(angle) * direction;
-          ball.vy = Math.sin(angle);
+          // Initialize 3 balls
+          balls.length = 0;
+          for (let i = 0; i < numBalls; i++) {
+            const ball = createBall(direction, (i - 1) * 30);
+            const angle = (Math.random() * 0.6 - 0.3) * Math.PI; // -54deg..+54deg
+            ball.vx = Math.cos(angle) * direction;
+            ball.vy = Math.sin(angle);
+            balls.push(ball);
+          }
           awaitingServe = false;
+        }
+
+        function initObstacles() {
+          obstacles.length = 0;
+          const spacing = viewHeight / (numObstacles + 1);
+          for (let i = 0; i < numObstacles; i++) {
+            obstacles.push({
+              x: viewWidth / 2 - obstacleWidth / 2,
+              y: spacing * (i + 1) - obstacleHeight / 2,
+              width: obstacleWidth,
+              height: obstacleHeight,
+              vy: (Math.random() > 0.5 ? 1 : -1) * obstacleSpeed
+            });
+          }
         }
 
         function drawNet() {
@@ -1869,7 +1916,17 @@
           ctx.fillRect(x, y, paddleWidth, paddleHeight);
         }
 
-        function drawBall() {
+        function drawObstacle(obstacle) {
+          ctx.save();
+          ctx.fillStyle = '#ff6b6b';
+          ctx.strokeStyle = '#c1121f';
+          ctx.lineWidth = 2;
+          ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+          ctx.strokeRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+          ctx.restore();
+        }
+
+        function drawBall(ball) {
           ctx.save();
           ctx.translate(ball.x, ball.y);
           const r = ball.r;
@@ -1961,6 +2018,14 @@
           ctx.font = `bold ${fontSize}px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace`;
           ctx.fillText(`${leftScore}`, viewWidth * 0.25, 20);
           ctx.fillText(`${rightScore}`, viewWidth * 0.75, 20);
+          
+          // Draw combo
+          if (combo > 0) {
+            const comboSize = Math.max(20, Math.floor(viewWidth * 0.05));
+            ctx.fillStyle = '#ffd700';
+            ctx.font = `bold ${comboSize}px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace`;
+            ctx.fillText(`${combo}x COMBO!`, viewWidth / 2, 60);
+          }
         }
 
         function drawOverlay(textLines) {
@@ -1995,81 +2060,154 @@
           if (!running || paused) return;
           const dt = Math.min(32, dtMs) / 1000; // clamp delta to avoid jumps
 
+          // Update game time and difficulty
+          gameTime += dt;
+          difficultyMultiplier = 1.0 + (gameTime / 60) * 0.3; // Increase difficulty over time
+          currentAiMaxSpeed = aiMaxSpeedBase * difficultyMultiplier;
+
+          // Update combo timer
+          if (gameTime - lastHitTime > comboTimeout) {
+            combo = 0;
+          }
+
           // Player control
           leftPaddleVy = 0;
           if (keys.has('ArrowUp') || keys.has('KeyW')) leftPaddleVy -= playerSpeed;
           if (keys.has('ArrowDown') || keys.has('KeyS')) leftPaddleVy += playerSpeed;
           leftPaddleY = clamp(leftPaddleY + leftPaddleVy * dt, 0, viewHeight - paddleHeight);
 
-          // Simple AI follows ball with capped speed and slight lead (made easier)
-          // Add delay/reaction time to make AI less perfect
-          const ballFutureY = ball.y + (ball.vy * aiTrackingBias * 0.3); // Further reduced prediction
-          const aiTargetY = clamp(ballFutureY, paddleHeight / 2, viewHeight - paddleHeight / 2) - paddleHeight / 2;
-          const aiDelta = aiTargetY - rightPaddleY;
-          // Add more smoothing/delay to AI movement to make it easier
-          const aiStep = clamp(aiDelta * 0.7, -aiMaxSpeed * dt, aiMaxSpeed * dt); // 0.7 factor adds more delay
-          rightPaddleVy = aiStep / dt;
-          rightPaddleY = clamp(rightPaddleY + aiStep, 0, viewHeight - paddleHeight);
+          // AI follows closest ball
+          if (balls.length > 0 && !awaitingServe) {
+            let closestBall = balls[0];
+            let closestDist = Math.abs(closestBall.x - (viewWidth - paddleInset));
+            for (let i = 1; i < balls.length; i++) {
+              const dist = Math.abs(balls[i].x - (viewWidth - paddleInset));
+              if (dist < closestDist && balls[i].vx > 0) {
+                closestDist = dist;
+                closestBall = balls[i];
+              }
+            }
+            
+            const ballFutureY = closestBall.y + (closestBall.vy * aiTrackingBias * 0.3);
+            const aiTargetY = clamp(ballFutureY, paddleHeight / 2, viewHeight - paddleHeight / 2) - paddleHeight / 2;
+            const aiDelta = aiTargetY - rightPaddleY;
+            const aiStep = clamp(aiDelta * 0.7, -currentAiMaxSpeed * dt, currentAiMaxSpeed * dt);
+            rightPaddleVy = aiStep / dt;
+            rightPaddleY = clamp(rightPaddleY + aiStep, 0, viewHeight - paddleHeight);
+          }
+
+          // Update obstacles
+          obstacles.forEach(obstacle => {
+            obstacle.y += obstacle.vy * dt * difficultyMultiplier;
+            if (obstacle.y < 0) {
+              obstacle.y = 0;
+              obstacle.vy = Math.abs(obstacle.vy);
+            } else if (obstacle.y + obstacle.height > viewHeight) {
+              obstacle.y = viewHeight - obstacle.height;
+              obstacle.vy = -Math.abs(obstacle.vy);
+            }
+          });
 
           if (!awaitingServe) {
-            // Ball movement
-            ball.x += ball.vx * ball.speed * dt;
-            ball.y += ball.vy * ball.speed * dt;
-
-            // Wall collisions
-            if (ball.y - ball.r < 0) {
-              ball.y = ball.r;
-              ball.vy = Math.abs(ball.vy);
-            } else if (ball.y + ball.r > viewHeight) {
-              ball.y = viewHeight - ball.r;
-              ball.vy = -Math.abs(ball.vy);
-            }
-
-            // Paddle collisions
             const leftRect = { x: paddleInset, y: leftPaddleY, w: paddleWidth, h: paddleHeight };
             const rightRect = { x: viewWidth - paddleInset - paddleWidth, y: rightPaddleY, w: paddleWidth, h: paddleHeight };
 
-            if (ball.vx < 0 && circleRectCollide(ball.x, ball.y, ball.r, leftRect.x, leftRect.y, leftRect.w, leftRect.h)) {
-              const centerY = leftRect.y + leftRect.h / 2;
-              const offset = (ball.y - centerY) / (leftRect.h / 2); // -1..1
-              const angle = clamp(offset, -1, 1) * (Math.PI / 3); // up to 60deg
-              const influence = clamp(leftPaddleVy / playerSpeed, -0.25, 0.25);
-              const dirX = 1;
-              const nx = Math.cos(angle) * dirX;
-              const ny = Math.sin(angle) + influence;
-              const len = Math.hypot(nx, ny) || 1;
-              ball.vx = nx / len;
-              ball.vy = ny / len;
-              ball.speed = Math.min(maxBallSpeed, ball.speed * ballSpeedIncrementFactor);
-              ball.x = leftRect.x + leftRect.w + ball.r; // prevent sticking
-            }
+            // Process each ball
+            for (let i = balls.length - 1; i >= 0; i--) {
+              const ball = balls[i];
+              
+              // Ball movement
+              ball.x += ball.vx * ball.speed * dt * difficultyMultiplier;
+              ball.y += ball.vy * ball.speed * dt * difficultyMultiplier;
 
-            if (ball.vx > 0 && circleRectCollide(ball.x, ball.y, ball.r, rightRect.x, rightRect.y, rightRect.w, rightRect.h)) {
-              const centerY = rightRect.y + rightRect.h / 2;
-              const offset = (ball.y - centerY) / (rightRect.h / 2);
-              const angle = clamp(offset, -1, 1) * (Math.PI / 3);
-              const influence = clamp(rightPaddleVy / aiMaxSpeed, -0.2, 0.2);
-              const dirX = -1;
-              const nx = Math.cos(angle) * dirX;
-              const ny = Math.sin(angle) + influence;
-              const len = Math.hypot(nx, ny) || 1;
-              ball.vx = nx / len;
-              ball.vy = ny / len;
-              ball.speed = Math.min(maxBallSpeed, ball.speed * ballSpeedIncrementFactor);
-              ball.x = rightRect.x - ball.r; // prevent sticking
-            }
+              // Wall collisions
+              if (ball.y - ball.r < 0) {
+                ball.y = ball.r;
+                ball.vy = Math.abs(ball.vy);
+              } else if (ball.y + ball.r > viewHeight) {
+                ball.y = viewHeight - ball.r;
+                ball.vy = -Math.abs(ball.vy);
+              }
 
-            // Scoring
-            if (ball.x + ball.r < 0) {
-              rightScore += 1;
-              serveDir = 1;
-              awaitingServe = true;
-              resetRound(serveDir);
-            } else if (ball.x - ball.r > viewWidth) {
-              leftScore += 1;
-              serveDir = -1;
-              awaitingServe = true;
-              resetRound(serveDir);
+              // Obstacle collisions
+              obstacles.forEach(obstacle => {
+                if (circleRectCollide(ball.x, ball.y, ball.r, obstacle.x, obstacle.y, obstacle.width, obstacle.height)) {
+                  // Bounce off obstacle
+                  const centerX = obstacle.x + obstacle.width / 2;
+                  const centerY = obstacle.y + obstacle.height / 2;
+                  const dx = ball.x - centerX;
+                  const dy = ball.y - centerY;
+                  const dist = Math.hypot(dx, dy);
+                  if (dist > 0) {
+                    ball.vx = dx / dist;
+                    ball.vy = dy / dist;
+                    ball.speed = Math.min(maxBallSpeed, ball.speed * 1.1);
+                    // Move ball outside obstacle
+                    const overlap = ball.r + Math.max(obstacle.width, obstacle.height) / 2 - dist;
+                    if (overlap > 0) {
+                      ball.x += (dx / dist) * overlap;
+                      ball.y += (dy / dist) * overlap;
+                    }
+                  }
+                }
+              });
+
+              // Left paddle collision
+              if (ball.vx < 0 && circleRectCollide(ball.x, ball.y, ball.r, leftRect.x, leftRect.y, leftRect.w, leftRect.h)) {
+                const centerY = leftRect.y + leftRect.h / 2;
+                const offset = (ball.y - centerY) / (leftRect.h / 2);
+                const angle = clamp(offset, -1, 1) * (Math.PI / 3);
+                const influence = clamp(leftPaddleVy / playerSpeed, -0.25, 0.25);
+                const dirX = 1;
+                const nx = Math.cos(angle) * dirX;
+                const ny = Math.sin(angle) + influence;
+                const len = Math.hypot(nx, ny) || 1;
+                ball.vx = nx / len;
+                ball.vy = ny / len;
+                ball.speed = Math.min(maxBallSpeed, ball.speed * ballSpeedIncrementFactor);
+                ball.x = leftRect.x + leftRect.w + ball.r;
+                
+                // Combo system
+                lastHitTime = gameTime;
+                combo++;
+              }
+
+              // Right paddle collision
+              if (ball.vx > 0 && circleRectCollide(ball.x, ball.y, ball.r, rightRect.x, rightRect.y, rightRect.w, rightRect.h)) {
+                const centerY = rightRect.y + rightRect.h / 2;
+                const offset = (ball.y - centerY) / (rightRect.h / 2);
+                const angle = clamp(offset, -1, 1) * (Math.PI / 3);
+                const influence = clamp(rightPaddleVy / currentAiMaxSpeed, -0.2, 0.2);
+                const dirX = -1;
+                const nx = Math.cos(angle) * dirX;
+                const ny = Math.sin(angle) + influence;
+                const len = Math.hypot(nx, ny) || 1;
+                ball.vx = nx / len;
+                ball.vy = ny / len;
+                ball.speed = Math.min(maxBallSpeed, ball.speed * ballSpeedIncrementFactor);
+                ball.x = rightRect.x - ball.r;
+              }
+
+              // Scoring
+              if (ball.x + ball.r < 0) {
+                rightScore += Math.max(1, Math.floor(combo / 5)); // Bonus points for combos
+                combo = 0;
+                balls.splice(i, 1);
+                if (balls.length === 0) {
+                  serveDir = 1;
+                  awaitingServe = true;
+                  resetRound(serveDir);
+                }
+              } else if (ball.x - ball.r > viewWidth) {
+                leftScore += Math.max(1, Math.floor(combo / 5)); // Bonus points for combos
+                combo = 0;
+                balls.splice(i, 1);
+                if (balls.length === 0) {
+                  serveDir = -1;
+                  awaitingServe = true;
+                  resetRound(serveDir);
+                }
+              }
             }
           }
         }
@@ -2080,9 +2218,16 @@
           ctx.fillRect(0, 0, viewWidth, viewHeight);
 
           drawNet();
+          
+          // Draw obstacles
+          obstacles.forEach(obstacle => drawObstacle(obstacle));
+          
           drawPaddle(paddleInset, leftPaddleY);
           drawPaddle(viewWidth - paddleInset - paddleWidth, rightPaddleY);
-          drawBall();
+          
+          // Draw all balls
+          balls.forEach(ball => drawBall(ball));
+          
           drawScore();
 
           if (!running) {
@@ -2137,6 +2282,11 @@
           serveDir = Math.random() < 0.5 ? -1 : 1;
           leftPaddleY = (viewHeight - paddleHeight) / 2;
           rightPaddleY = (viewHeight - paddleHeight) / 2;
+          combo = 0;
+          gameTime = 0;
+          difficultyMultiplier = 1.0;
+          currentAiMaxSpeed = aiMaxSpeedBase;
+          initObstacles();
           resetRound(serveDir);
         }
 
@@ -2205,6 +2355,11 @@
           serveDir = Math.random() < 0.5 ? -1 : 1;
           leftScore = 0;
           rightScore = 0;
+          combo = 0;
+          gameTime = 0;
+          difficultyMultiplier = 1.0;
+          currentAiMaxSpeed = aiMaxSpeedBase;
+          initObstacles();
           resetRound(serveDir);
         }
 
@@ -2213,7 +2368,12 @@
           paused = false;
           leftScore = 0;
           rightScore = 0;
+          combo = 0;
+          gameTime = 0;
+          difficultyMultiplier = 1.0;
+          currentAiMaxSpeed = aiMaxSpeedBase;
           serveDir = Math.random() < 0.5 ? -1 : 1;
+          initObstacles();
           resetRound(serveDir);
         }
 
@@ -2273,6 +2433,8 @@
         window.addEventListener('resize', resize);
         // Initial resize to set up canvas dimensions
         resize();
+        // Initialize obstacles
+        initObstacles();
         // Initial game state - don't start loop until modal opens
         resetGame();
         // Render initial frame so canvas is ready
