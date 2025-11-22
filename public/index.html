@@ -954,6 +954,7 @@
           <div class="container">
             <h1 class="h2">Cauchy–Schwarz Inequality</h1>
             <p class="muted">For vectors u, v in ℝ²: <span class="value">|⟨u, v⟩| ≤ ∥u∥ · ∥v∥</span></p>
+            <p style="margin-top: 1rem; color: #666; line-height: 1.6;">The Cauchy-Schwarz inequality states that the absolute value of the dot product of two vectors is always less than or equal to the product of their magnitudes. This means the cosine of the angle between two vectors cannot exceed 1 in absolute value. When the vectors are parallel (pointing in the same or opposite directions), equality holds. Adjust the vectors below to see how the dot product compares to the product of their magnitudes!</p>
             <div class="grid grid-2@md">
               <div class="panel">
                 <div class="field">
@@ -1342,9 +1343,13 @@
           const rhs = uLen * vLen;
           lhsVal.textContent = round(lhs, 3).toFixed(3);
           rhsVal.textContent = round(rhs, 3).toFixed(3);
-          const ratio = rhs > 0 ? Math.min(1, lhs / rhs) : 0;
-          lhsBar.style.width = `${(ratio * 100).toFixed(1)}%`;
-          rhsBar.style.width = '100%';
+          // Maximum possible value: when both vectors are at max magnitude (5) and parallel
+          const maxPossibleValue = 5 * 5; // 25
+          // Calculate bar widths as percentages of the maximum possible value
+          const lhsBarWidth = maxPossibleValue > 0 ? Math.min(100, (lhs / maxPossibleValue) * 100) : 0;
+          const rhsBarWidth = maxPossibleValue > 0 ? Math.min(100, (rhs / maxPossibleValue) * 100) : 0;
+          lhsBar.style.width = `${lhsBarWidth.toFixed(1)}%`;
+          rhsBar.style.width = `${rhsBarWidth.toFixed(1)}%`;
           eqNote.textContent = (rhs === 0 || Math.abs(lhs - rhs) < 1e-6)
             ? 'Equality holds (vectors are colinear or one is zero).'
             : 'Strict inequality (vectors are not colinear).';
@@ -1354,8 +1359,9 @@
           const margin = 24;
           const halfW = (w - margin * 2) / 2;
           const halfH = (h - margin * 2) / 2;
-          const maxVec = Math.max(1, uLen, vLen);
-          const scale = 0.9 * Math.min(halfW, halfH) / maxVec;
+          // Use fixed scale based on maximum possible magnitude (5) to prevent visual changes
+          const maxPossibleMag = 5;
+          const scale = 0.9 * Math.min(halfW, halfH) / maxPossibleMag;
           const cx = w / 2; const cy = h / 2;
           const toX = (x) => cx + x * scale;
           const toY = (y) => cy - y * scale;
@@ -1384,15 +1390,26 @@
             ctx.strokeStyle = color;
             ctx.fillStyle = color;
             ctx.lineWidth = 2.5;
-            line(toX(x0), toY(y0), toX(x1), toY(y1));
+            const x0Screen = toX(x0);
+            const y0Screen = toY(y0);
+            const x1Screen = toX(x1);
+            const y1Screen = toY(y1);
+            line(x0Screen, y0Screen, x1Screen, y1Screen);
+            // Draw arrowhead at the end of the vector
             const angle = Math.atan2(y1 - y0, x1 - x0);
-            const ah = 8;
-            const ax = toX(x1) - Math.cos(angle) * ah;
-            const ay = toY(y1) + Math.sin(angle) * ah * -1;
+            const arrowLength = 10;
+            const arrowWidth = 6;
+            // Calculate arrow tip position (slightly back from the end)
+            const tipX = x1Screen - Math.cos(angle) * arrowLength * 0.3;
+            const tipY = y1Screen + Math.sin(angle) * arrowLength * 0.3;
+            // Calculate perpendicular direction for arrow sides
+            const perpX = -Math.sin(angle);
+            const perpY = Math.cos(angle);
+            // Draw arrowhead triangle
             ctx.beginPath();
-            ctx.moveTo(toX(x1), toY(y1));
-            ctx.lineTo(ax + Math.cos(angle + Math.PI / 2) * 4, ay - Math.sin(angle + Math.PI / 2) * 4);
-            ctx.lineTo(ax + Math.cos(angle - Math.PI / 2) * 4, ay - Math.sin(angle - Math.PI / 2) * 4);
+            ctx.moveTo(x1Screen, y1Screen);
+            ctx.lineTo(tipX + perpX * arrowWidth / 2, tipY - perpY * arrowWidth / 2);
+            ctx.lineTo(tipX - perpX * arrowWidth / 2, tipY + perpY * arrowWidth / 2);
             ctx.closePath();
             ctx.fill();
             ctx.restore();
